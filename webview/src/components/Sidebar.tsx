@@ -71,7 +71,7 @@ export function Sidebar() {
     const clearHistory = (e: React.MouseEvent) => {
         e.stopPropagation();
         // Remove confirm for debug
-        api.saveHistory([]);
+        api.clearHistory();
         setHistory([]);
         api.showInfo('History cleared');
     };

@@ -27,6 +27,10 @@ export const api = {
         });
     },
 
+    clearHistory: () => {
+        vscode.postMessage({ type: 'clearHistory' });
+    },
+
     getHistory: () => {
         vscode.postMessage({ type: 'getHistory' });
     },

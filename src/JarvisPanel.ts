@@ -58,6 +58,11 @@ export class JarvisPanel implements vscode.WebviewViewProvider {
                     this.sendHistory(webviewView.webview);
                     break;
                 }
+                case 'clearHistory': {
+                    await this._storageManager.clearHistory();
+                    this.sendHistory(webviewView.webview);
+                    break;
+                }
                 case 'onInfo': {
                     if (!data.value) { return; }
                     vscode.window.showInformationMessage(data.value);

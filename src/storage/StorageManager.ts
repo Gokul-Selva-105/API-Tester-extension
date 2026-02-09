@@ -34,16 +34,34 @@ export class StorageManager {
 
     public async addToHistory(request: any) {
         let history = this.getHistory();
-        // Add to beginning, limit to 50
+
+        // Remove duplicates (same method and url) to keep history clean? 
+        // Or just straightforward add? Let's just add but limit strictly.
+        // Actually, preventing exact duplicates (method + url) at the top is good UX.
+        if (history.length > 0) {
+            const top = history[0];
+            if (top.method === request.method && top.url === request.url) {
+                // Determine if body changed? For now, just duplicate is fine if it's different timestamp
+                // But user complained about "old history", maybe clutter.
+            }
+        }
+
         history.unshift({ ...request, timestamp: Date.now() });
-        if (history.length > 50) {
-            history = history.slice(0, 50);
+
+        // Limit to 20 as per user feedback "more than 15 things showing"
+        if (history.length > 20) {
+            history = history.slice(0, 20);
         }
         await this.context.globalState.update(StorageManager.KEY_HISTORY, history);
     }
 
     public async saveHistory(history: any[]) {
         await this.context.globalState.update(StorageManager.KEY_HISTORY, history);
+    }
+
+    public async clearHistory() {
+        // Explicitly update to empty array
+        await this.context.globalState.update(StorageManager.KEY_HISTORY, []);
     }
 
     public getEnvironments(): any[] {
