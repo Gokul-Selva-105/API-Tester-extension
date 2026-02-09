@@ -124,7 +124,46 @@ export function Sidebar() {
                         <div className="px-4 text-xs text-muted-foreground italic">No collections</div>
                     )}
                     {collections.map((col) => (
-                        <div key={col.id} className="mb-2">
+                        <div
+                            key={col.id}
+                            className="mb-2"
+                            onDragOver={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.add('bg-secondary/30');
+                            }}
+                            onDragLeave={(e) => {
+                                e.currentTarget.classList.remove('bg-secondary/30');
+                            }}
+                            onDrop={(e) => {
+                                e.preventDefault();
+                                e.currentTarget.classList.remove('bg-secondary/30');
+                                const reqData = e.dataTransfer.getData('application/json');
+                                if (!reqData) return;
+
+                                const { reqId, sourceColId } = JSON.parse(reqData);
+                                if (sourceColId === col.id) return; // Same collection
+
+                                // Move request
+                                const newCollections = collections.map(c => {
+                                    if (c.id === sourceColId) {
+                                        return { ...c, requests: c.requests.filter((r: any) => r.id !== reqId) };
+                                    }
+                                    if (c.id === col.id) {
+                                        // Find request from source (we need entire object, can't get from dataTransfer easily if huge)
+                                        // Better way: Find it from state
+                                        const sourceCol = collections.find(sc => sc.id === sourceColId);
+                                        const reqToMove = sourceCol?.requests.find((r: any) => r.id === reqId);
+                                        if (reqToMove) {
+                                            return { ...c, requests: [...c.requests, reqToMove] };
+                                        }
+                                    }
+                                    return c;
+                                });
+
+                                setCollections(newCollections);
+                                api.saveCollections(newCollections);
+                            }}
+                        >
                             <div className="px-2 py-1.5 flex items-center gap-2 hover:bg-secondary/50 rounded cursor-pointer group">
                                 <Folder size={16} className="text-blue-400" />
                                 <span className="flex-1 truncate font-medium">{col.name}</span>
@@ -147,8 +186,13 @@ export function Sidebar() {
                                 {col.requests?.map((req: any) => (
                                     <div
                                         key={req.id}
+                                        draggable
+                                        onDragStart={(e) => {
+                                            e.dataTransfer.setData('application/json', JSON.stringify({ reqId: req.id, sourceColId: col.id }));
+                                            e.dataTransfer.effectAllowed = 'move';
+                                        }}
                                         onClick={() => loadRequest(req)}
-                                        className="px-2 py-1.5 flex items-center gap-2 hover:bg-secondary/50 rounded cursor-pointer group justify-between"
+                                        className="px-2 py-1.5 flex items-center gap-2 hover:bg-secondary/50 rounded cursor-pointer group justify-between hover:border-l-2 hover:border-primary transition-all"
                                     >
                                         <div className="flex items-center gap-2 flex-1 min-w-0">
                                             <span className={`w-8 font-bold text-[10px] text-right ${getMethodColor(req.method)}`}>{req.method}</span>
